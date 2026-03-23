@@ -1,42 +1,37 @@
 import serial
 import re
 
-PORT = "/dev/ttyACM0"   
-BAUDRATE = 9600         
-pattern = re.compile(r"Humidité:\s*([\d.]+)%\s*Température:\s*([\d.]+)")
+PORT = "/dev/ttyACM0"   # à adapter
+BAUDRATE = 9600
 
-def main():
-    ser = serial.Serial(PORT, BAUDRATE, timeout=1)
+# Regex pour ton format réel
+temp_pattern = re.compile(r"Temp[ée]rature[=\s]+([\d.]+)°?C")
+hum_pattern = re.compile(r"Humidit[éey]+[=\s]+([\d.]+)")
 
-    print(f"Lecture sur {PORT} à {BAUDRATE} bauds...")
+ser = serial.Serial(PORT, BAUDRATE, timeout=1)
+print(f"Lecture sur {PORT}...")
 
-    try:
-        while True:
-            
-            line = ser.readline().decode("utf-8", errors="ignore").strip()
-            if not line:
-                continue
+try:
+    while True:
+        line = ser.readline().decode("utf-8", errors="ignore").strip()
+        if not line:
+            continue
 
-            print("Reçu brut :", line)
+        print("Reçu brut :", line)
 
-            
-            match = pattern.search(line)
-            if match:
-                humidity_str, temp_str = match.groups()
-                try:
-                    humidity = float(humidity_str)
-                    temperature = float(temp_str)
-                    print(f"Humidité = {humidity} % | Température = {temperature} °C")
-                except ValueError:
-                    print("Impossible de convertir en float :", humidity_str, temp_str)
-            else:
-                print("Ligne non reconnue, format différent ?")
+        # Parse température
+        temp_match = temp_pattern.search(line)
+        if temp_match:
+            temperature = float(temp_match.group(1))
+            print(f"✅ Température = {temperature} °C")
 
-    except KeyboardInterrupt:
-        print("Arrêt demandé (Ctrl+C).")
-    finally:
-        ser.close()
-        print("Port série fermé.")
+        # Parse humidité
+        hum_match = hum_pattern.search(line)
+        if hum_match:
+            humidity = float(hum_match.group(1))
+            print(f"✅ Humidité = {humidity} %")
 
-if __name__ == "__main__":
-    main()
+except KeyboardInterrupt:
+    pass
+finally:
+    ser.close()
