@@ -5,62 +5,56 @@ import time
 PORT = "/dev/ttyACM0"
 BAUDRATE = 9600
 
-# Variables globales pour stocker les dernières valeurs valides
-temperature = 0.0
-humidity = 0.0
-last_update = 0
+# Variables globales
+temperature = None
+humidity = None
+last_temp_time = 0
+last_hum_time = 0
 
-# Regex comme avant
-temp_pattern = re.compile(r"Temp[ée]rature[=\s]+([\d.]+)°?C")
-hum_pattern = re.compile(r"Humidit[éey]+[=\s]+([\d.]+)")
+# Regex corrigées pour ton format exact
+temp_pattern = re.compile(r"Temp(erature|érature)[=\s]*([\d.]+)C?", re.IGNORECASE)
+hum_pattern = re.compile(r"Hum(dity|idité|idity)[=\s]*([\d.]+)%?", re.IGNORECASE)
 
 ser = serial.Serial(PORT, BAUDRATE, timeout=1)
+print(f"Lecture sur {PORT}...")
 
-def update_sensor_data():
-    """Lit une ligne et met à jour les variables globales"""
-    global temperature, humidity, last_update
-    
-    line = ser.readline().decode("utf-8", errors="ignore").strip()
-    if not line:
-        return False
+def are_both_values_received():
+    """Vérifie si les deux valeurs ont été reçues récemment"""
+    return temperature is not None and humidity is not None
 
-    print("Reçu :", line)
-
-    # Mise à jour température
-    temp_match = temp_pattern.search(line)
-    if temp_match:
-        temperature = round(float(temp_match.group(1)), 1)
-        print(f"Temp mise à jour : {temperature} °C")
-
-    # Mise à jour humidité
-    hum_match = hum_pattern.search(line)
-    if hum_match:
-        humidity = round(float(hum_match.group(1)), 1)
-        print(f"Hum mise à jour : {humidity} %")
-
-    last_update = time.time()
-    return True
-
-def get_sensor_data():
-    """Retourne les dernières valeurs connues"""
-    return {
-        "temperature": round(temperature, 1),
-        "humidity": round(humidity, 1),
-        "last_update": last_update
-    }
-
-# Boucle principale
 try:
     while True:
-        update_sensor_data()
-        
-        # Exemple d'utilisation des variables
-        print(f"Données actuelles - T:{temperature}°C H:{humidity}% (maj {time.time()-last_update:.1f}s)")
-        
-        time.sleep(1)  # Rafraîchissement toutes les secondes
+        line = ser.readline().decode("utf-8", errors="ignore").strip()
+        if not line:
+            continue
+
+        print(f"Reçu : {line}")
+
+        # Parse température
+        temp_match = temp_pattern.search(line)
+        if temp_match:
+            temp_str = temp_match.group(2)
+            temperature = round(float(temp_str), 1)
+            last_temp_time = time.time()
+            print(f"Temp mise à jour : {temperature} °C")
+
+        # Parse humidité (regex plus flexible)
+        hum_match = hum_pattern.search(line)
+        if hum_match:
+            hum_str = hum_match.group(2)
+            humidity = round(float(hum_str), 1)
+            last_hum_time = time.time()
+            print(f"Humidite mise à jour : {humidity} %")
+
+        # Affichage UNIQUEMENT si les deux sont reçues
+        if are_both_values_received():
+            print(f"Données actuelles - T:{temperature}°C H:{humidity}% (maj {time.time()-max(last_temp_time, last_hum_time):.1f}s)")
+
+        time.sleep(0.1)  # Petit délai pour éviter spam
 
 except KeyboardInterrupt:
     pass
 finally:
     ser.close()
-    print(f"Données finales - T:{temperature}°C H:{humidity}%")
+    if temperature is not None and humidity is not None:
+        print(f"Données finales - T:{temperature}°C H:{humidity}%")
