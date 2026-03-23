@@ -1,6 +1,37 @@
+<?php
+$servername = "10.2.2.38";
+$username   = "mathys";
+$password   = "1234";
+$database   = "meteo";
+
+//créer la connexion
+// Connexion correcte : utilise les variables, pas les valeurs directement
+$conn = new mysqli($servername, $username, $password, $database);
+
+// Vérification de la connexion
+if ($conn->connect_error) {
+    die("Connexion échouée : " . $conn->connect_error);
+}
+
+echo "Connexion réussie !";
+
+// création database 
+
+$sql = "CREATE DATABASE myDB";
+if ($conn->querry($sql)=== TRUE ){
+    echo "Database created successfully"
+} else { echo "error creating database:" .$conn->error;
+}
+
+//fermer connexion 
+$conn->close();
+?>
+
+
 <!DOCTYPE html>
 <html lang = "en">
 <head>
+    
 <link rel="stylesheet" href="">
     <meta charset="utf-8" />
     <title>ISS WEATHER REPORT</title>
