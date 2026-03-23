@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="utf-8" />
+    <title>ISS WEATHER REPORT</title>
+    <style>
+        /* Styles globaux */
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f3f3f3;
+            color: #333;
+        }
+
+        /* En-tête */
+        header {
+            background-color: #0044cc;
+            color: white;
+            text-align: center;
+            padding: 20px 0;
+        }
+
+        #entete p {
+            margin: 0;
+            font-size: 2em;
+        }
+
+        /* Mise en page principale */
+        #UI {
+            display: flex;
+            justify-content: space-around;
+            margin: 20px 0;
+            padding: 10px;
+            background-color: #fff;
+            border-radius: 8px;
+        }
+
+        #UI div {
+            padding: 10px;
+            background-color: #0044cc;
+            color: white;
+            border-radius: 8px;
+            width: 30%;
+            text-align: center;
+            cursor: pointer;
+        }
+
+        #UI div:hover {
+            background-color: #0033aa;
+        }
+
+        ol {
+            margin: 20px;
+            padding: 0;
+            list-style-type: none;
+        }
+
+        ol li {
+            background-color: #0044cc;
+            color: white;
+            padding: 10px;
+            margin: 5px 0;
+            border-radius: 4px;
+            cursor: pointer;
+            text-align: center;
+        }
+
+        ol li:hover {
+            background-color: #0033aa;
+        }
+
+        /* Section des résultats */
+        main {
+            padding: 20px;
+        }
+
+        #meteomap {
+            display: flex;
+            justify-content: space-around;
+            margin-top: 20px;
+        }
+
+        #meteomap div {
+            text-align: center;
+            padding: 20px;
+            background-color: #fff;
+            border-radius: 10px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            width: 25%;
+        }
+
+        #meteomap .nb_temp, #meteomap .nb_press, #meteomap .nb_hygro {
+            font-size: 1.5em;
+            margin-top: 10px;
+        }
+
+        /* Cacher les contenus dynamiques au départ */
+        .content {
+            display: none;
+            margin-top: 20px;
+            text-align: center;
+        }
+
+        footer {
+            background-color: #0044cc;
+            text-align: center;
+            padding: 10px;
+            color: white;
+            position: fixed;
+            width: 100%;
+            bottom: 0;
+        }
+    </style>
+</head>
+
+<body>
+    <header>
+        <div id="entete">
+            <p>ISS WEATHER REPORT</p>
+        </div>
+    </header>
+
+    <div id="UI"> 
+        <div name="temp" onclick="showContent('temp')">Température en direct</div>
+        <div name="hygro" onclick="showContent('hygro')">Humidité en direct</div>
+    </div>
+   
+    <main>
+        <section id="meteomap">
+            <div id="thermo">
+                <div class="nb_temp">20°C</div>
+            </div>
+            <div id="humidite">
+                <div class="nb_hygro">60%</div>
+            </div>
+        </section>
+        
+        <div id="content" class="content">
+            <!-- Contenus dynamiques pour chaque section -->
+            <p id="tempContent" style="display: none;">Voici les détails de la température.</p>
+            <p id="hygroContent" style="display: none;">Voici les détails de l'humidité.</p>
+            <p id="journéeContent" style="display: none;">Voici le bilan de la journée.</p>
+            <p id="moisContent" style="display: none;">Voici le bilan du mois actuel.</p>
+        </div>
+    </main>
+    
+    <ol>
+        <li onclick="showContent('temp')">Relevé Température</li>
+        <li onclick="showContent('hygro')">Relevé D'Humidité (%)</li>
+        <li onclick="showContent('journée')">Bilan de la journée</li>
+        <li onclick="showContent('mois')">Bilan du mois actuel</li>
+    </ol>
+
+    <footer>
+        <p>ISS Weather Data © 2026</p>
+    </footer>
+
+    <script>
+        // Fonction pour afficher le contenu lié au bouton cliqué
+        function showContent(type) {
+            // Masquer tout le contenu au départ
+            document.getElementById("content").style.display = "block";
+            document.getElementById("tempContent").style.display = "none";
+            document.getElementById("hygroContent").style.display = "none";
+            document.getElementById("journéeContent").style.display = "none";
+            document.getElementById("moisContent").style.display = "none";
+
+            // Afficher le contenu approprié
+            if (type === 'temp') {
+                document.getElementById("tempContent").style.display = "block"; // Afficher les détails de la température
+            } else if (type === 'hygro') {
+                document.getElementById("hygroContent").style.display = "block"; // Afficher les détails de l'humidité
+            } else if (type === 'journée') {
+                document.getElementById("journéeContent").style.display = "block"; // Afficher le bilan de la journée
+            } else if (type === 'mois') {
+                document.getElementById("moisContent").style.display = "block"; // Afficher le bilan du mois
+            }
+        }
+    </script>
+</body>
+</html>
