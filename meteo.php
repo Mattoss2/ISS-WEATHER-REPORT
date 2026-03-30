@@ -1,4 +1,16 @@
-<?php
+
+
+<!DOCTYPE html>
+<html lang = "en">
+<head>
+    
+<link rel="stylesheet" href="">
+    <meta charset="utf-8" />
+    <title>ISS WEATHER REPORT</title>
+</head>
+
+<body>
+    <?php
 $servername = "10.2.2.38";
 $username   = "mathys";
 $password   = "1234";
@@ -15,29 +27,42 @@ if ($conn->connect_error) {
 
 echo "Connexion réussie !";
 
-// création database 
+// enreregistre un utilisateur
+$nom = "exemple";
+$email ="exemple@email.com"
+$motdepasse ="123456"
+$hash= password_hash ($motdepasse, PASSWORD_DEFAULT)
 
-$sql = "CREATE DATABASE myDB";
-if ($conn->querry($sql)=== TRUE ){
-    echo "Database created successfully"
-} else { echo "error creating database:" .$conn->error;
+$stmt = $conn -> prepare ("INSERT INTO users (username, email, password_hash) VALUES (?,?,?");
+$stmt -> bind_param ("sss",$nom,$email,$hash);
+if ($stmt -> execute()) {
+    echo "utilisateur ajouté avec succès";
+} else {
+    echo "Erreur:" .$stmt -> error;
 }
+$stmt -> close ();
+$conn -> close ();
 
+
+//User table
+$sql =" CREATE TABLE IF NOT EXISTS users (
+id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+username VARCHAR (50) NOT NULL,
+email VARCHAR(100) NOT NULL UNIQUE,
+password_hash VARCHAR (255) NOT NULL,
+created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+)";
+
+if ($conn->query($sql)=== TRUE ) {
+    echo "Table users créée avec succès";
+
+} else {
+    echo "Erreur : ". $conn -> error;
+}
 //fermer connexion 
 $conn->close();
 ?>
 
-
-<!DOCTYPE html>
-<html lang = "en">
-<head>
-    
-<link rel="stylesheet" href="">
-    <meta charset="utf-8" />
-    <title>ISS WEATHER REPORT</title>
-</head>
-
-<body>
     <header>
 <div id="entete">
     <p>ISS WEATHER REPORT</p>
