@@ -29,7 +29,7 @@
         /* Mise en page principale */
         #UI {
             display: flex;
-            justify-content: space-around;
+            justify-content: space-around;            
             margin: 20px 0;
             padding: 10px;
             background-color: #fff;
@@ -111,6 +111,31 @@
             width: 100%;
             bottom: 0;
         }
+
+        #dbBtn {
+            background-color: #28a745;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+        }
+
+        #dbBtn.disconnect {
+            background-color: #dc3545;
+        }
+
+        #loginForm {
+            text-align: center;
+            margin: 20px 0;
+        }
+
+        #loginForm input {
+            padding: 8px;
+            margin: 5px;
+            border-radius: 4px;
+            border: 1px solid #ccc;
+        }
     </style>
 </head>
 
@@ -122,10 +147,10 @@
     </header>
 
     <div id="UI"> 
-        <div name="temp" onclick="showContent('temp')">Température en direct</div>
-        <div name="hygro" onclick="showContent('hygro')">Humidité en direct</div>
+        <div id="temp" onclick="showContent('temp')">Température en direct</div>
+        <div id="hygro" onclick="showContent('hygro')">Humidité en direct</div>
     </div>
-   
+
     <main>
         <section id="meteomap">
             <div id="thermo">
@@ -140,17 +165,25 @@
             <!-- Contenus dynamiques pour chaque section -->
             <p id="tempContent" style="display: none;">Voici les détails de la température.</p>
             <p id="hygroContent" style="display: none;">Voici les détails de l'humidité.</p>
-            <p id="journéeContent" style="display: none;">Voici le bilan de la journée.</p>
+            <p id="journeeContent" style="display: none;">Voici le bilan de la journée.</p>
             <p id="moisContent" style="display: none;">Voici le bilan du mois actuel.</p>
+            <p id="anneeContent" style="display: none;">Voici le bilan de l'année actuelle.</p>
         </div>
     </main>
     
     <ol>
-        <li onclick="showContent('temp')">Relevé Température</li>
-        <li onclick="showContent('hygro')">Relevé D'Humidité (%)</li>
-        <li onclick="showContent('journée')">Bilan de la journée</li>
+        <li onclick="showContent('temp')">Relevé de température</li>
+        <li onclick="showContent('hygro')">Relevé d'humidité (%)</li>
+        <li onclick="showContent('journee')">Bilan de la journée</li>
         <li onclick="showContent('mois')">Bilan du mois actuel</li>
+        <li onclick="showContent('annee')">Bilan de l'année actuelle</li>
     </ol>
+
+    <div id="loginForm">
+        <input type="text" id="dbUser" placeholder="Nom d'utilisateur">
+        <input type="password" id="dbPass" placeholder="Mot de passe">
+        <button id="dbBtn" onclick="toggleDB()">Se connecter</button>
+    </div>
 
     <footer>
         <p>ISS Weather Data © 2026</p>
@@ -163,18 +196,68 @@
             document.getElementById("content").style.display = "block";
             document.getElementById("tempContent").style.display = "none";
             document.getElementById("hygroContent").style.display = "none";
-            document.getElementById("journéeContent").style.display = "none";
+            document.getElementById("journeeContent").style.display = "none";
             document.getElementById("moisContent").style.display = "none";
+            document.getElementById("anneeContent").style.display = "none";
 
             // Afficher le contenu approprié
             if (type === 'temp') {
-                document.getElementById("tempContent").style.display = "block"; // Afficher les détails de la température
+                document.getElementById("tempContent").style.display = "block";
             } else if (type === 'hygro') {
-                document.getElementById("hygroContent").style.display = "block"; // Afficher les détails de l'humidité
-            } else if (type === 'journée') {
-                document.getElementById("journéeContent").style.display = "block"; // Afficher le bilan de la journée
+                document.getElementById("hygroContent").style.display = "block";
+            } else if (type === 'journee') {
+                document.getElementById("journeeContent").style.display = "block";
             } else if (type === 'mois') {
-                document.getElementById("moisContent").style.display = "block"; // Afficher le bilan du mois
+                document.getElementById("moisContent").style.display = "block";
+            } else if (type === 'annee') {
+                document.getElementById("anneeContent").style.display = "block";
+            }
+        }
+
+        // Gestion de la connexion à la base SQL
+        let connected = false;
+
+        async function toggleDB() {
+            const btn = document.getElementById('dbBtn');
+
+            if (!connected) {
+                // Récupérer username et password
+                const username = document.getElementById('dbUser').value;
+                const password = document.getElementById('dbPass').value;
+
+                // Envoyer au serveur Java pour tenter la connexion
+                try {
+                    const response = await fetch(`http://localhost:8080/connect?user=${encodeURIComponent(username)}&pass=${encodeURIComponent(password)}`);
+                    const result = await response.json();
+
+                    if (result.success) {
+                        connected = true;
+                        btn.textContent = "Se déconnecter";
+                        btn.classList.add('disconnect');
+                        alert("Connexion réussie !");
+                    } else {
+                        alert("Erreur : nom d'utilisateur ou mot de passe incorrect.");
+                    }
+                } catch (error) {
+                    console.error("Erreur :", error);
+                }
+            } else {
+                // Déconnexion
+                try {
+                    const response = await fetch('http://localhost:8080/disconnect');
+                    const result = await response.json();
+
+                    if (result.success) {
+                        connected = false;
+                        btn.textContent = "Se connecter";
+                        btn.classList.remove('disconnect');
+                        alert("Déconnecté !");
+                    } else {
+                        alert("Erreur lors de la déconnexion");
+                    }
+                } catch (error) {
+                    console.error("Erreur :", error);
+                }
             }
         }
     </script>
