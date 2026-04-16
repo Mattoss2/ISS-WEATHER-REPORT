@@ -2,9 +2,9 @@
 header('Content-Type: application/json; charset=utf-8');
 
 $host = 'localhost';
-$db   = 'meteo';              // ou le nom réel
-$user = 'adminbddnayrod360';
-$pass = 'TON_MDP_BITWARDEN';
+$db   = 'meteo';           
+$user = 'mathys';
+$pass = 'mathys123';
 $charset = 'utf8mb4';
 
 // === AFFICHAGE DES VARIABLES ===
