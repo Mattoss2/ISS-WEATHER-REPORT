@@ -1,8 +1,11 @@
 <?php
-$servername = "10.2.2.38";
-$username = "mathys";
-$password = "1234";
-$database = "meteo";
+header('Content-Type: application/json; charset=utf-8');
+
+$host = 'localhost';
+$db   = 'meteo';           
+$user = 'mathys';
+$pass = 'mathys123';
+$charset = 'utf8mb4';
 
 // === AFFICHAGE DES VARIABLES ===
 echo "<h3>📋 Contenu des variables :</h3>";
