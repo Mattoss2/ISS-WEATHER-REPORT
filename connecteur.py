@@ -17,7 +17,7 @@ DB_CONFIG = {
 PORT = "/dev/ttyACM0"
 BAUDRATE = 9600
 SAVE_INTERVAL = 15 * 60
-id_immeuble = 1
+id_immeuble = 2
 temperature = None
 humidity = None
 last_save_time = 0
@@ -37,7 +37,7 @@ def test_connection():
 
 # Sauvegarde sur la DB
 def save_to_db(temp, hum, id_immeuble):
-    id_immeuble = 1
+    id_immeuble = 2
     try:
         conn = pymysql.connect(**DB_CONFIG)
         with conn.cursor() as cursor:
