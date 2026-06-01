@@ -153,7 +153,6 @@
     </div>
 
     <div class="cards-container">
-
         <div class="card">
             <div class="temp-block">
                 <div class="label">Température</div>
@@ -191,7 +190,6 @@
                 <div id="search-time" class="label">--</div>
             </div>
         </div>
-
     </div>
 
     <div class="chart-container">
@@ -293,7 +291,31 @@
     </script>
 
     <script>
+        const startDateInput = document.getElementById('start-date');
+        const endDateInput = document.getElementById('end-date');
+        const loadChartBtn = document.getElementById('load-chart');
+        const chartCanvas = document.getElementById('weatherChart');
+        const ctx = chartCanvas.getContext('2d');
         const filterBtns = document.querySelectorAll('.filter-btn');
+        let weatherChartInstance = null;
+        let currentFilter = 'both';
+
+        function applyChartFilter(filter) {
+            if (!weatherChartInstance) return;
+
+            if (filter === 'both') {
+                weatherChartInstance.setDatasetVisibility(0, true);
+                weatherChartInstance.setDatasetVisibility(1, true);
+            } else if (filter === 'temp') {
+                weatherChartInstance.setDatasetVisibility(0, true);
+                weatherChartInstance.setDatasetVisibility(1, false);
+            } else if (filter === 'hum') {
+                weatherChartInstance.setDatasetVisibility(0, false);
+                weatherChartInstance.setDatasetVisibility(1, true);
+            }
+
+            weatherChartInstance.update();
+        }
 
         filterBtns.forEach(btn => {
             btn.addEventListener('click', () => {
@@ -301,6 +323,7 @@
                 btn.classList.add('active');
 
                 const filter = btn.dataset.filter;
+                currentFilter = filter;
 
                 document.querySelectorAll('.temp-block').forEach(el => {
                     el.style.display = (filter === 'hum') ? 'none' : 'block';
@@ -309,17 +332,10 @@
                 document.querySelectorAll('.hum-block').forEach(el => {
                     el.style.display = (filter === 'temp') ? 'none' : 'block';
                 });
+
+                applyChartFilter(filter);
             });
         });
-    </script>
-
-    <script>
-        const startDateInput = document.getElementById('start-date');
-        const endDateInput = document.getElementById('end-date');
-        const loadChartBtn = document.getElementById('load-chart');
-        const chartCanvas = document.getElementById('weatherChart');
-        const ctx = chartCanvas.getContext('2d');
-        let weatherChartInstance = null;
 
         function getTodayDate() {
             const now = new Date();
@@ -437,6 +453,8 @@
                         }
                     }
                 });
+
+                applyChartFilter(currentFilter);
             } catch (e) {
                 console.error(e);
                 alert('Erreur lors du chargement des données');
