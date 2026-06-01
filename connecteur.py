@@ -1,66 +1,115 @@
+#!/usr/bin/env python3
+"""
+DHT11 Arduino → Table 'donnees_capteurs' MariaDB
+Champs : date_mesure, temperature, humidite
+Ubuntu 24.04 Apache phpMyAdmin
+"""
+
 import serial
 import re
+import pymysql
 import time
 
+# ========== CONFIG MARIA DB (Bitwarden) ==========
+DB_CONFIG = {
+    'host': 'localhost',
+    'user': 'makimo',
+    'password': 'anto123',  # "MySQL - Nayrod Admin"
+    'database': 'meteo',   # Ta base
+    'charset': 'utf8mb4',
+    'autocommit': True
+}
+
+# Arduino
 PORT = "/dev/ttyACM0"
 BAUDRATE = 9600
+SAVE_INTERVAL = 15 * 60  # 15 minutes
+id_immeuble = 1
+temperature = None
+humidity = None
+last_save_time = 0
 
-# Variables globales pour stocker les dernières valeurs valides
-temperature = 0.0
-humidity = 0.0
-last_update = 0
+# Regex Arduino DHT11
+DHT_PATTERN = re.compile(r"Temperature:\s*(\d+)\s*°C\s*Humidity:\s*(\d+)\s*%")
 
-# Regex comme avant
-temp_pattern = re.compile(r"Temp[ée]rature[=\s]+([\d.]+)°?C")
-hum_pattern = re.compile(r"Humidit[éey]+[=\s]+([\d.]+)")
-
-ser = serial.Serial(PORT, BAUDRATE, timeout=1)
-
-def update_sensor_data():
-    """Lit une ligne et met à jour les variables globales"""
-    global temperature, humidity, last_update
-    
-    line = ser.readline().decode("utf-8", errors="ignore").strip()
-    if not line:
+def test_connection():
+    """Test MariaDB"""
+    try:
+        conn = pymysql.connect(**DB_CONFIG)
+        conn.close()
+        print("Connexion meteo OK")
+        return True
+    except Exception as e:
+        print(f"Connexion KO : {e}")
         return False
 
-    print("Reçu :", line)
+def save_to_db(temp, hum, id_immeuble):
+    """INSERT dans donnes_capteurs (id_immeuble=NULL)"""
+    id_immeuble = 1
+    try:
+        conn = pymysql.connect(**DB_CONFIG)
+        with conn.cursor() as cursor:
+            cursor.execute(
+                "INSERT INTO donnees_capteurs (temperature, humidite, id_immeuble) VALUES (%s, %s, %s)",
+                (temp, hum, id_immeuble)
+            )
+        conn.close()
+        print(f"INSERT T:{temp}°C H:{hum}% → phpMyAdmin")
+        return True
+    except Exception as e:
+        print(f"INSERT ERROR : {e}")
+        return False
 
-    # Mise à jour température
-    temp_match = temp_pattern.search(line)
-    if temp_match:
-        temperature = round(float(temp_match.group(1)), 1)
-        print(f"Temp mise à jour : {temperature} °C")
+def latest_record():
+    """Dernière ligne DB (debug)"""
+    try:
+        conn = pymysql.connect(**DB_CONFIG)
+        with conn.cursor() as cursor:
+            cursor.execute("SELECT id_donnees_capteurs, temperature, humidite, date_mesure FROM donnes_capteurs ORDER BY id_donnees_capteurs DESC LIMIT 1")
+            row = cursor.fetchone()
+            if row:
+                print(f"DERNIÈRE : #{row[0]} T:{row[1]}°C H:{row[2]}% {row[3]}")
+        conn.close()
+    except:
+        pass
 
-    # Mise à jour humidité
-    hum_match = hum_pattern.search(line)
-    if hum_match:
-        humidity = round(float(hum_match.group(1)), 1)
-        print(f"Hum mise à jour : {humidity} %")
+# ========== MAIN ==========
+print("DHT11 Arduino → donnees_capteurs MariaDB")
 
-    last_update = time.time()
-    return True
+if not test_connection():
+    exit(1)
 
-def get_sensor_data():
-    """Retourne les dernières valeurs connues"""
-    return {
-        "temperature": round(temperature, 1),
-        "humidity": round(humidity, 1),
-        "last_update": last_update
-    }
+latest_record()  # État initial DB
 
-# Boucle principale
 try:
+    ser = serial.Serial(PORT, BAUDRATE, timeout=1)
+    print(f"Arduino {PORT} OK")
+    
     while True:
-        update_sensor_data()
-        
-        # Exemple d'utilisation des variables
-        print(f"Données actuelles - T:{temperature}°C H:{humidity}% (maj {time.time()-last_update:.1f}s)")
-        
-        time.sleep(1)  # Rafraîchissement toutes les secondes
-
+        line = ser.readline().decode("utf-8", errors="ignore").strip()
+        if line:
+            print(f"Arduino: {line}")
+            
+            match = DHT_PATTERN.search(line)
+            if match:
+                temp = round(float(match.group(1)), 1)
+                hum = round(float(match.group(2)), 1)
+                
+                print(f"MESURE T:{temp}°C H:{hum}%")
+                
+                # Sauvegarde 15min
+                if time.time() - last_save_time >= SAVE_INTERVAL:
+                    if save_to_db(temp, hum, id_immeuble):
+                        latest_record()
+                        last_save_time = time.time()
+            
+            time.sleep(2)  # Cycle DHT11
+            
 except KeyboardInterrupt:
-    pass
+    print("\nArrêt propre")
+except Exception as e:
+    print(f"Erreur : {e}")
 finally:
-    ser.close()
-    print(f"Données finales - T:{temperature}°C H:{humidity}%")
+    if 'ser' in locals():
+        ser.close()
+        print("Arduino déconnecté")
